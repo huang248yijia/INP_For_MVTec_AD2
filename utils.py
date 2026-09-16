@@ -20,6 +20,9 @@ from aug_funcs import rot_img, translation_img, hflip_img, grey_img, rot90_img
 import torch.backends.cudnn as cudnn
 from adeval import  EvalAccumulatorCuda
 
+# 【新增修改區塊開始：引入 tifffile 用於儲存預測圖】
+import tifffile as tiff
+# 【新增修改區塊結束】
 
 def ader_evaluator(pr_px, pr_sp, gt_px, gt_sp, use_metrics = ['I-AUROC', 'I-AP', 'I-F1_max','P-AUROC', 'P-AP', 'P-F1_max', 'AUPRO']):
     if len(gt_px.shape) == 4:
@@ -238,6 +241,31 @@ def evaluation_batch(model, dataloader, device, _class_=None, max_ratio=0, resiz
                 anomaly_map = F.interpolate(anomaly_map, size=resize_mask, mode='bilinear', align_corners=False)
                 gt = F.interpolate(gt, size=resize_mask, mode='nearest')
             anomaly_map = gaussian_kernel(anomaly_map)
+            
+            # 【新增修改區塊開始：將 batch 內的每一張預測圖存成官方要求的 tiff 格式】
+            batch_size = img.shape[0]
+            for b_idx in range(batch_size):
+                path = img_path[b_idx]
+                # 轉為 2D ndarray 並設定為 float32
+                pred_map = anomaly_map[b_idx].squeeze().cpu().numpy().astype(np.float32)
+                
+                # 統一處理跨平台路徑分隔符號並切分路徑
+                path_norm = os.path.normpath(path)
+                parts = path_norm.split(os.sep)
+                
+                img_name = os.path.splitext(parts[-1])[0]  # e.g., '000'
+                defect_type = parts[-2]                    # e.g., 'bad'
+                category = parts[-4]                       # e.g., 'can'
+                
+                # 建立官方評估程式所需的階層資料夾： anomaly_map_results/anomaly_images_public/類別/test_public/瑕疵種類
+                save_dir = os.path.join('./anomaly_map_results', 'anomaly_images_public', category, 'test_public', defect_type)
+                os.makedirs(save_dir, exist_ok=True)
+                
+                # 寫入 tiff 檔
+                save_path = os.path.join(save_dir, f"{img_name}.tiff")
+                tiff.imwrite(save_path, pred_map)
+            # 【新增修改區塊結束】
+
             gt[gt > 0.5] = 1
             gt[gt <= 0.5] = 0
             # gt = gt.bool()
@@ -260,16 +288,6 @@ def evaluation_batch(model, dataloader, device, _class_=None, max_ratio=0, resiz
         
         # GPU acceleration
         auroc_sp, ap_sp, f1_sp, auroc_px, ap_px, f1_px, aupro_px = ader_evaluator(pr_list_px, pr_list_sp, gt_list_px, gt_list_sp)
-
-        # Only CPU
-        # aupro_px = compute_pro(gt_list_px, pr_list_px)
-        # gt_list_px, pr_list_px = gt_list_px.ravel(), pr_list_px.ravel()
-        # auroc_px = roc_auc_score(gt_list_px, pr_list_px)
-        # auroc_sp = roc_auc_score(gt_list_sp, pr_list_sp)
-        # ap_px = average_precision_score(gt_list_px, pr_list_px)
-        # ap_sp = average_precision_score(gt_list_sp, pr_list_sp)
-        # f1_sp = f1_score_max(gt_list_sp, pr_list_sp)
-        # f1_px = f1_score_max(gt_list_px, pr_list_px)
 
     return [auroc_sp, ap_sp, f1_sp, auroc_px, ap_px, f1_px, aupro_px]
 
@@ -321,16 +339,6 @@ def evaluation_batch_vis_ZS(model, dataloader, device, _class_=None, max_ratio=0
 
          # GPU acceleration
         auroc_sp, ap_sp, f1_sp, auroc_px, ap_px, f1_px, aupro_px = ader_evaluator(pr_list_px, pr_list_sp, gt_list_px, gt_list_sp)
-
-        # Only CPU
-        # aupro_px = compute_pro(gt_list_px, pr_list_px)
-        # gt_list_px, pr_list_px = gt_list_px.ravel(), pr_list_px.ravel()
-        # auroc_px = roc_auc_score(gt_list_px, pr_list_px)
-        # auroc_sp = roc_auc_score(gt_list_sp, pr_list_sp)
-        # ap_px = average_precision_score(gt_list_px, pr_list_px)
-        # ap_sp = average_precision_score(gt_list_sp, pr_list_sp)
-        # f1_sp = f1_score_max(gt_list_sp, pr_list_sp)
-        # f1_px = f1_score_max(gt_list_px, pr_list_px)
 
     return [auroc_sp, ap_sp, f1_sp, auroc_px, ap_px, f1_px, aupro_px]
 

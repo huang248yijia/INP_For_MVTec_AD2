@@ -28,9 +28,9 @@ def main(args):
     setup_seed(1)
 
     # Data Preparation
-    data_transform, gt_transform = get_data_transforms(args.input_size, args.crop_size)
+    data_transform, gt_transform = get_data_transforms(252, 252)
 
-    if args.dataset == 'MVTec-AD' or args.dataset == 'VisA':
+    if args.dataset == 'MVTec-AD' or args.dataset == 'VisA' or args.dataset == 'MVTec-AD-2' :
         train_data_list = []
         test_data_list = []
         for i, item in enumerate(args.item_list):
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
 
     # dataset info
-    parser.add_argument('--dataset', type=str, default=r'MVTec-AD') # 'MVTec-AD' or 'VisA' or 'Real-IAD'
+    parser.add_argument('--dataset', type=str, default=r'MVTec-AD') # 'MVTec-AD' or 'VisA' or 'Real-IAD' or 'MVTec-AD-2'
     parser.add_argument('--data_path', type=str, default=r'E:\IMSN-LW\dataset\mvtec_anomaly_detection') # Replace it with your path.
 
     # save info
@@ -246,4 +246,7 @@ if __name__ == '__main__':
                  'porcelain_doll', 'regulator', 'rolled_strip_base', 'sim_card_set', 'switch', 'tape',
                  'terminalblock', 'toothbrush', 'toy', 'toy_brick', 'transistor1', 'usb',
                  'usb_adaptor', 'u_block', 'vcpill', 'wooden_beads', 'woodstick', 'zipper']
+    elif args.dataset == 'MVTec-AD-2':
+        args.item_list = ['can', 'fabric', 'fruit_jelly', 'rice', 
+                          'sheet_metal', 'vial', 'wallplugs', 'walnuts']
     main(args)

@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Logs
+*.log
+
+# Generated output
+anomaly_map_results/
+saved_results/
+saved_results_backup/
+
+# Model weights
+*.pth
+*.pt
+*.ckpt
+
+# Dataset
+data/
+dataset/
+datasets/
+mvtec_ad_2/
+mvtec_ad_2_dataset/
+
+# Results / output
+output/
+outputs/
+results/
+anomaly_images/
+INPFormer_submission/
+*.tar.gz
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store

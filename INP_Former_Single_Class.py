@@ -30,14 +30,92 @@ def main(args):
     data_transform, gt_transform = get_data_transforms(args.input_size, args.crop_size)
 
     if args.dataset == 'MVTec-AD' or args.dataset == 'VisA':
-        train_path = os.path.join(args.data_path, args.item, 'train')
-        test_path = os.path.join(args.data_path, args.item)
+    train_path = os.path.join(args.data_path, args.item, 'train')
+    test_path = os.path.join(args.data_path, args.item)
 
-        train_data = ImageFolder(root=train_path, transform=data_transform)
-        test_data = MVTecDataset(root=test_path, transform=data_transform, gt_transform=gt_transform, phase="test")
-        train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=4,
-                                                       drop_last=True)
-        test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=4)
+    train_data = ImageFolder(
+        root=train_path,
+        transform=data_transform
+    )
+
+    test_data = MVTecDataset(
+        root=test_path,
+        transform=data_transform,
+        gt_transform=gt_transform,
+        phase="test"
+    )
+
+    train_dataloader = DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=4,
+        drop_last=True
+    )
+
+    test_dataloader = DataLoader(
+        test_data,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4
+    )
+
+
+elif args.dataset == 'MVTec-AD-2':
+
+    category_root = os.path.join(
+        args.data_path,
+        args.item
+    )
+
+    train_path = os.path.join(
+        category_root,
+        'train'
+    )
+
+    # Train
+    train_data = ImageFolder(
+        root=train_path,
+        transform=data_transform
+    )
+
+    # Validation
+    val_data = MVTecDataset(
+        root=category_root,
+        transform=data_transform,
+        gt_transform=gt_transform,
+        phase='validation'
+    )
+
+    # TESTpub
+    test_data = MVTecDataset(
+        root=category_root,
+        transform=data_transform,
+        gt_transform=gt_transform,
+        phase='test_public'
+    )
+
+    train_dataloader = DataLoader(
+        train_data,
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=4,
+        drop_last=True
+    )
+
+    val_dataloader = DataLoader(
+        val_data,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4
+    )
+
+    test_dataloader = DataLoader(
+        test_data,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=4
+    )
     elif args.dataset == 'Real-IAD' :
         train_data = RealIADDataset(root=args.data_path, category=args.item, transform=data_transform, gt_transform=gt_transform,
                                     phase='train')
@@ -46,7 +124,7 @@ def main(args):
         train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True, num_workers=4,
                                                        drop_last=True)
         test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=args.batch_size, shuffle=False, num_workers=4)
-
+    
     # Adopting a grouping-based reconstruction strategy similar to Dinomaly
     target_layers = [2, 3, 4, 5, 6, 7, 8, 9]
     fuse_layer_encoder = [[0, 1, 2, 3], [4, 5, 6, 7]]
@@ -163,8 +241,8 @@ if __name__ == '__main__':
 
     # model info
     parser.add_argument('--encoder', type=str, default='dinov2reg_vit_base_14') # 'dinov2reg_vit_small_14' or 'dinov2reg_vit_base_14' or 'dinov2reg_vit_large_14'
-    parser.add_argument('--input_size', type=int, default=448)
-    parser.add_argument('--crop_size', type=int, default=392)
+    parser.add_argument('--input_size', type=int, default=252)
+    parser.add_argument('--crop_size', type=int, default=252)
     parser.add_argument('--INP_num', type=int, default=6)
 
     # training info
@@ -194,7 +272,17 @@ if __name__ == '__main__':
                  'porcelain_doll', 'regulator', 'rolled_strip_base', 'sim_card_set', 'switch', 'tape',
                  'terminalblock', 'toothbrush', 'toy', 'toy_brick', 'transistor1', 'usb',
                  'usb_adaptor', 'u_block', 'vcpill', 'wooden_beads', 'woodstick', 'zipper']
-
+    elif args.dataset == 'MVTec-AD-2':
+        args.item_list = [
+            'can',
+            'fabric',
+            'fruit_jelly',
+            'rice',
+            'sheet_metal',
+            'vial',
+            'wallplugs',
+            'walnuts'
+        ]
     result_list = []
     for item in args.item_list:
         args.item = item
